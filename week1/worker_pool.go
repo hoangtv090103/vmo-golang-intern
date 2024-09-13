@@ -17,18 +17,20 @@ func factorial(n int) int {
 }
 
 // Worker gets jobs from jobs channel and processes them
-func worker(id int, jobs <- chan int, wg *sync.WaitGroup) {
+func worker(id int, jobs <-chan int, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	for n := range jobs {
-	   fmt.Printf("Worker %d: Received job %d\n", id, n)
+		fmt.Printf("Worker %d: Received job %d\n", id, n)
 		fmt.Printf("Worker %d: %d! = %d\n", id, n, factorial(n))
 	}
 }
 
-  func WorkerPool() {
-      
-    // Parse command line arguments
+// Run this program with the following command:
+// go run worker_pool.go -jobs 10 -workers 3
+func main() {
+
+	// Parse command line arguments
 	numJobs := flag.Int("jobs", 10, "Number of jobs to process")
 	numWorkers := flag.Int("workers", 3, "Number of workers to create")
 	flag.Parse()
