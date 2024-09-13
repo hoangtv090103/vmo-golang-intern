@@ -5,30 +5,30 @@ import (
 	"sync"
 )
 
-func immutableIncrement(wg *sync.WaitGroup, results chan int) {
+func immutableIncrement(wg *sync.WaitGroup, c chan int) {
 	defer wg.Done()   // Ensure Done is called even if there's a panic
 	localCounter := 0 // Each goroutine has its own counter (immutable)
 	for i := 0; i < 1000; i++ {
 		localCounter += 23 // Safe, no shared state
 	}
-	results <- localCounter // Send result to the channel
+	c <- localCounter // Send result to the channel
 }
 
 func UseImmutability() {
 	fmt.Println("Solving RC using Immutability")
 	var wg sync.WaitGroup
-	results := make(chan int, 2)
+	c := make(chan int, 2)
 
 	wg.Add(2)
 
-	go immutableIncrement(&wg, results)
-	go immutableIncrement(&wg, results)
+	go immutableIncrement(&wg, c)
+	go immutableIncrement(&wg, c)
 
 	wg.Wait()
-	close(results)
+	close(c)
 
 	finalCounter := 0
-	for result := range results {
+	for result := range c {
 		finalCounter += result // Sum the results from both goroutines
 	}
 
