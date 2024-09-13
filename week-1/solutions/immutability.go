@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-func immutableIncrement(wg *sync.WaitGroup, results chan<- int) {
+func immutableIncrement(wg *sync.WaitGroup, results chan int) {
 	defer wg.Done()   // Ensure Done is called even if there's a panic
 	localCounter := 0 // Each goroutine has its own counter (immutable)
 	for i := 0; i < 1000; i++ {
