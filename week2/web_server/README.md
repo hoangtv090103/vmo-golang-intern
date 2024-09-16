@@ -7,24 +7,24 @@ week2/web_server
 │   └── main.go                   --> Application entry point
 │
 ├── internal
-│
+│   |
 │   module_user
-│   │
-│   ├── domain
-│   │   └── user.go               --> Core entities (User struct, business logic)
-│   │
-│   ├── handlers
-│   │   └── user_handler.go       --> Interface/Controller layer (Handles HTTP requests, forwards to use case)
-│   │
-│   ├── infra
-│   │   └── memory
-│   │       └── user.go           --> Infrastructure layer (In-memory storage, repository implementation)
-│   │
-│   ├── repositories
-│   │   └── user_repository.go    --> Repository interfaces
-│   │
-│   └── usecases
-│       └── user_usecase.go       --> Use case layer (Application logic, coordinates between domain and repositories)
+│       │
+│       ├── domain
+│       │   └── user.go               --> Core entities (User struct, business logic)
+│       │
+│       ├── handlers
+│       │   └── user_handler.go       --> Interface/Controller layer (Handles HTTP requests, forwards to use case)
+│       │
+│       ├── infra
+│       │   └── memory
+│       │       └── user.go           --> Infrastructure layer (In-memory storage, repository implementation)
+│       │
+│       ├── repositories
+│       │   └── user_repository.go    --> Repository interfaces
+│       │
+│       └── usecases
+│           └── user_usecase.go       --> Use case layer (Application logic, coordinates between domain and repositories)
 │
 └── tmp                           --> (Empty or used for temporary files)
 ```
