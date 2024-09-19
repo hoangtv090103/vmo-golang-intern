@@ -8,7 +8,7 @@ week2/web_server
 │
 ├── internal
 │   |
-│   module_user
+│   |──module_user
 │       │
 │       ├── domain
 │       │   └── user.go               --> Core entities (User struct, business logic)

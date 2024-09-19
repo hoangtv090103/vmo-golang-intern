@@ -5,5 +5,6 @@ type User struct {
 	UserID   int
 	Name     string
 	Username string
+	Email    string
 	Password string
 }
