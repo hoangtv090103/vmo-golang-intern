@@ -23,8 +23,7 @@ func NewUserRepoPG(pdb *config.PG, rdb *config.Redis) *UserRepoPG {
 }
 
 func (u *UserRepoPG) Create(user domain.User) error {
-	query := `INSERT INTO users (name, username, email, balance)
-              	VALUES ($1, $2, $3, $4, $5) returning id`
+	query := `INSERT INTO users (name, username, email, balance) VALUES ($1, $2, $3, $4)`
 
 	_, err := u.PG.GetDB().Exec(query, user.Name, user.Username, user.Email, user.Balance)
 

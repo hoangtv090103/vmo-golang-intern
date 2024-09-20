@@ -19,10 +19,11 @@ func NewProductRepoPG(pg *config.PG) *ProductRepoPG {
 }
 
 func (p *ProductRepoPG) Create(product productDomain.Product) error {
-	query := `INSERT INTO products (name, price, stock) VALUES ($1, $2, $3)`
+	query := `INSERT INTO products (name, description, price, stock) VALUES ($1, $2, $3, $4)`
 	_, err := p.PG.GetDB().Exec(
 		query,
 		product.Name,
+		product.Description,
 		product.Price,
 		product.Stock,
 	)
