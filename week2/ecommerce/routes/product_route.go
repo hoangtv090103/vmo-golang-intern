@@ -5,6 +5,6 @@ import (
 	"net/http"
 )
 
-func ProductRoute(h *handler.ProductHandler) {
-	http.HandleFunc("/products", h.Handler)
+func ProductRoute(h *handler.ProductHandler, mux *http.ServeMux) {
+	mux.HandleFunc("/products", h.Handler)
 }

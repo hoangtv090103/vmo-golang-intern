@@ -1,6 +1,7 @@
 package db
 
 import (
+	"database/sql"
 	"ecommerce/config"
 	productDomain "ecommerce/internal/product/domain"
 	// userDomain "ecommerce/internal/user/domain"
@@ -19,7 +20,6 @@ func NewProductRepoPG(pg *config.PG) *ProductRepoPG {
 
 func (p *ProductRepoPG) Create(product productDomain.Product) error {
 	query := `INSERT INTO products (name, price, stock) VALUES ($1, $2, $3)`
-
 	_, err := p.PG.GetDB().Exec(
 		query,
 		product.Name,
@@ -42,7 +42,12 @@ func (p *ProductRepoPG) GetAll() ([]productDomain.Product, error) {
 		return nil, err
 	}
 
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+
+		}
+	}(rows)
 
 	var products []productDomain.Product
 

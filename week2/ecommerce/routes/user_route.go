@@ -5,6 +5,6 @@ import (
 	"net/http"
 )
 
-func UserRoute(h *handler.UserHandler) {
-	http.HandleFunc("/users", h.Handler)
+func UserRoute(h *handler.UserHandler, mux *http.ServeMux) {
+	mux.HandleFunc("/users", h.Handler)
 }

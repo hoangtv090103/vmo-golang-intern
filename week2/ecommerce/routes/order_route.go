@@ -5,6 +5,6 @@ import (
 	"net/http"
 )
 
-func OrderRoute(handler *handler.OrderHandler) {
-	http.HandleFunc("/orders", handler.Handler)
+func OrderRoute(handler *handler.OrderHandler, mux *http.ServeMux) {
+	mux.HandleFunc("/orders", handler.Handler)
 }

@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"ecommerce/config"
 	"ecommerce/internal/user/domain"
 	"strconv"
@@ -22,10 +23,10 @@ func NewUserRepoPG(pdb *config.PG, rdb *config.Redis, ctx context.Context) *User
 }
 
 func (u *UserRepoPG) Create(user domain.User) error {
-	query := `INSERT INTO users (name, username, email, password, balance)
+	query := `INSERT INTO users (name, username, email, balance)
               	VALUES ($1, $2, $3, $4, $5) returning id`
 
-	_, err := u.PG.GetDB().Exec(query, user.Name, user.Username, user.Email, user.Password, user.Balance)
+	_, err := u.PG.GetDB().Exec(query, user.Name, user.Username, user.Email, user.Balance)
 
 	if err != nil {
 		return err
@@ -43,7 +44,12 @@ func (u *UserRepoPG) GetAll() ([]domain.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+
+		}
+	}(rows)
 
 	for rows.Next() {
 		var user domain.User
@@ -125,12 +131,6 @@ func (u *UserRepoPG) Update(user domain.User) error {
 	if user.Email != "" {
 		query += " email = $" + strconv.Itoa(paramCount) + ","
 		params = append(params, user.Email)
-		paramCount++
-	}
-
-	if user.Password != "" {
-		query += " password = $" + strconv.Itoa(paramCount) + ","
-		params = append(params, user.Password)
 		paramCount++
 	}
 
