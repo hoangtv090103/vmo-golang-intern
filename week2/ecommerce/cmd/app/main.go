@@ -59,7 +59,7 @@ func main() {
 	routes.AuthRoute(authH, authMux)
 
 	// User
-	userRepo := userDB.NewUserRepoPG(pg, redis, ctx)
+	userRepo := userDB.NewUserRepoPG(pg, redis)
 	userUC := userUsecase.NewUserUseCase(userRepo)
 	uh := userHandler.NewUserHandler(userUC)
 	routes.UserRoute(uh, mux)

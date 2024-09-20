@@ -14,7 +14,7 @@ type UserRepoPG struct {
 	Ctx context.Context
 }
 
-func NewUserRepoPG(pdb *config.PG, rdb *config.Redis, ctx context.Context) *UserRepoPG {
+func NewUserRepoPG(pdb *config.PG, rdb *config.Redis) *UserRepoPG {
 	return &UserRepoPG{
 		PG:  pdb,
 		RDB: rdb,
