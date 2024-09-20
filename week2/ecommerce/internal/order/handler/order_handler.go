@@ -30,9 +30,9 @@ func (oh *OrderHandler) Handler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		vars := mux.Vars(r)
 		if id, ok := vars["id"]; ok {
-			oh.GetOrderById(w, r, id)
+			oh.GetOrderById(w, id)
 		} else {
-			oh.GetAllOrders(w, r)
+			oh.GetAllOrders(w)
 		}
 	case http.MethodPut:
 		oh.UpdateOrder(w, r)
@@ -58,7 +58,7 @@ func (oh *OrderHandler) AddOrder(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
-func (oh *OrderHandler) GetAllOrders(w http.ResponseWriter, r *http.Request) {
+func (oh *OrderHandler) GetAllOrders(w http.ResponseWriter) {
 	orders, err := oh.orderUsecase.GetAllOrders()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -69,7 +69,7 @@ func (oh *OrderHandler) GetAllOrders(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(orders)
 }
 
-func (oh *OrderHandler) GetOrderById(w http.ResponseWriter, r *http.Request, id string) {
+func (oh *OrderHandler) GetOrderById(w http.ResponseWriter, id string) {
 	orderID, err := strconv.Atoi(id)
 	if err != nil {
 		http.Error(w, "Invalid order ID", http.StatusBadRequest)

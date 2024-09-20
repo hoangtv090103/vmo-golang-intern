@@ -5,19 +5,25 @@ import (
 	"ecommerce/internal/order/domain"
 	"fmt"
 	"github.com/jung-kurt/gofpdf"
+	"time"
 )
 
 func GenerateInvoicePDF(invoiceData domain.InvoiceData) ([]byte, error) {
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
 	pdf.SetFont("Arial", "B", 16)
-	pdf.Cell(40, 10, "Invoice")
+
+	pageWidth, _ := pdf.GetPageSize()
+	pdf.SetX((pageWidth - pdf.GetStringWidth("Invoice")) / 2)
+	pdf.CellFormat(pdf.GetStringWidth("Invoice"), 10, "Invoice", "0", 0, "C", false, 0, "")
 
 	pdf.SetFont("Arial", "", 12)
-	pdf.Ln(10)
+	pdf.Ln(20)
 	pdf.Cell(40, 10, fmt.Sprintf("Order ID: %d", invoiceData.OrderID))
 	pdf.Ln(10)
 	pdf.Cell(40, 10, "Order Date: "+invoiceData.OrderDate)
+	pdf.Ln(10)
+	pdf.Cell(40, 10, "Print Invoice Date: "+time.Now().Format("2006-01-02"))
 	pdf.Ln(10)
 	pdf.Cell(40, 10, "Customer: "+invoiceData.CustomerName)
 	pdf.Ln(10)
