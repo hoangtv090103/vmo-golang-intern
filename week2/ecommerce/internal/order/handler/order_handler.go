@@ -3,6 +3,8 @@ package handler
 import (
 	"ecommerce/internal/order/domain"
 	"ecommerce/internal/order/usecase"
+	orderUtils "ecommerce/internal/order/utils"
+	utils "ecommerce/utils"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -11,7 +13,8 @@ import (
 )
 
 type OrderHandler struct {
-	orderUsecase usecase.OrderUsecase
+	orderUsecase   usecase.OrderUsecase
+	InvoiceService *usecase.InvoiceService
 }
 
 func NewOrderHandler(orderUsecase usecase.OrderUsecase) *OrderHandler {
@@ -112,4 +115,23 @@ func (oh *OrderHandler) DeleteOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *OrderHandler) PrintInvoice(w http.ResponseWriter, r *http.Request) {
+	orderId := utils.StrToInt(r.URL.Query().Get("order_id"))
+	invoiceData, err := h.InvoiceService.GenerateInvoiceData(orderId)
+	if err != nil {
+		http.Error(w, "Failed to generate invoice data", http.StatusInternalServerError)
+		return
+	}
+
+	pdfBytes, err := orderUtils.GenerateInvoicePDF(*invoiceData)
+	if err != nil {
+		http.Error(w, "Failed to generate PDF", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Disposition", "attachment; filename=invoice.pdf")
+	w.Write(pdfBytes)
 }

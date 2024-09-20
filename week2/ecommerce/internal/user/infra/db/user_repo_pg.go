@@ -65,7 +65,7 @@ func (u *UserRepoPG) GetAll() ([]domain.User, error) {
 func (u *UserRepoPG) GetByID(id int) (domain.User, error) {
 	var user domain.User
 	err := u.PG.GetDB().QueryRow(
-		"SELECT id, name, username, email, balance FROM users WHHERE id = $1",
+		"SELECT id, name, username, email, balance FROM users WHERE id = $1",
 		id,
 	).Scan(&user.ID, &user.Name, &user.Username, &user.Email, &user.Balance)
 

@@ -7,17 +7,17 @@ import (
 	"errors"
 )
 
-type OrderRepoPg struct {
+type OrderRepoPG struct {
 	PG *config.PG
 }
 
-func NewOrderRepoPg(pg *config.PG) *OrderRepoPg {
-	return &OrderRepoPg{
+func NewOrderRepoPG(pg *config.PG) *OrderRepoPG {
+	return &OrderRepoPG{
 		PG: pg,
 	}
 }
 
-func (o *OrderRepoPg) LockProductForUpdate(tx *sql.Tx, id int) error {
+func (o *OrderRepoPG) LockProductForUpdate(tx *sql.Tx, id int) error {
 	query := `SELECT stock, price FROM products WHERE id = $1 FOR UPDATE`
 
 	var stock int
@@ -30,7 +30,7 @@ func (o *OrderRepoPg) LockProductForUpdate(tx *sql.Tx, id int) error {
 	return nil
 }
 
-func (o *OrderRepoPg) BuyProduct(tx *sql.Tx, productID, buyQty int) error {
+func (o *OrderRepoPG) BuyProduct(tx *sql.Tx, productID, buyQty int) error {
 	// Get product stock
 	var stock int
 	err := tx.QueryRow(`SELECT stock FROM products WHERE id = $1`, productID).Scan(&stock)
@@ -51,7 +51,7 @@ func (o *OrderRepoPg) BuyProduct(tx *sql.Tx, productID, buyQty int) error {
 	return nil
 }
 
-func (o *OrderRepoPg) UpdateUserBalance(tx *sql.Tx, userID int, totalPrice float64) error {
+func (o *OrderRepoPG) UpdateUserBalance(tx *sql.Tx, userID int, totalPrice float64) error {
 	// Lock user and update balance
 	var balance float64
 	var err error
@@ -72,7 +72,7 @@ func (o *OrderRepoPg) UpdateUserBalance(tx *sql.Tx, userID int, totalPrice float
 	return nil
 }
 
-func (o *OrderRepoPg) CreateOrderLine(tx *sql.Tx, orderID int, line domain.OrderLine) error {
+func (o *OrderRepoPG) CreateOrderLine(tx *sql.Tx, orderID int, line domain.OrderLine) error {
 	query := `INSERT INTO order_lines (order_id, product_id, qty, total) VALUES ($1, $2, $3, $4) RETURNING id`
 	_, err := tx.Exec(query, orderID, line.ProductID, line.Qty, line.Total)
 	if err != nil {
@@ -82,7 +82,7 @@ func (o *OrderRepoPg) CreateOrderLine(tx *sql.Tx, orderID int, line domain.Order
 	return nil
 }
 
-func (o *OrderRepoPg) Create(order domain.Order) error {
+func (o *OrderRepoPG) Create(order domain.Order) error {
 	// Begin a transaction
 	tx, err := o.PG.GetDB().Begin()
 	if err != nil {
@@ -91,9 +91,15 @@ func (o *OrderRepoPg) Create(order domain.Order) error {
 	// Ensure we commit or rollback the transaction properly
 	defer func() {
 		if err != nil {
-			tx.Rollback()
-		} else {
-			tx.Commit()
+			err := tx.Rollback()
+			if err != nil {
+				return
+			}
+			return
+		}
+		err := tx.Commit()
+		if err != nil {
+			return
 		}
 	}()
 
@@ -137,14 +143,21 @@ func (o *OrderRepoPg) Create(order domain.Order) error {
 		}
 	}
 
+	// Update user balance
 	err = o.UpdateUserBalance(tx, order.UserID, totalPrice)
+	if err != nil {
+		return err
+	}
+
+	// Update order total price
+	_, err = tx.Exec(`UPDATE orders SET total_price = $1 WHERE id = $2`, totalPrice, order.ID)
 	if err != nil {
 		return err
 	}
 
 	return nil
 }
-func (o *OrderRepoPg) GetAll() ([]domain.Order, error) {
+func (o *OrderRepoPG) GetAll() ([]domain.Order, error) {
 	query := `SELECT id, user_id, created_at, total_price FROM orders`
 	queryLines := `SELECT id, product_id, qty, total FROM order_lines WHERE order_id = $1`
 	rows, err := o.PG.GetDB().Query(query)
@@ -153,7 +166,12 @@ func (o *OrderRepoPg) GetAll() ([]domain.Order, error) {
 		return nil, err
 	}
 
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			return
+		}
+	}(rows)
 
 	var orders []domain.Order
 
@@ -176,7 +194,12 @@ func (o *OrderRepoPg) GetAll() ([]domain.Order, error) {
 		if err != nil {
 			return nil, err
 		}
-		defer rowsLines.Close()
+		defer func(rowsLines *sql.Rows) {
+			err := rowsLines.Close()
+			if err != nil {
+				return
+			}
+		}(rowsLines)
 
 		for rowsLines.Next() {
 			var line domain.OrderLine
@@ -201,10 +224,12 @@ func (o *OrderRepoPg) GetAll() ([]domain.Order, error) {
 	return orders, nil
 }
 
-func (o *OrderRepoPg) GetByID(id int) (domain.Order, error) {
+func (o *OrderRepoPG) GetByID(id int) (domain.Order, error) {
 	var order domain.Order
+	var orderLines []domain.OrderLine
+	// Retrieve order details
 	err := o.PG.GetDB().QueryRow(
-		`SELECT * FROM orders WHERE id = $1`,
+		`SELECT id, user_id, created_at, total_price FROM orders WHERE id = $1`,
 		id,
 	).Scan(&order.ID, &order.UserID, &order.OrderDate, &order.TotalPrice)
 
@@ -212,10 +237,39 @@ func (o *OrderRepoPg) GetByID(id int) (domain.Order, error) {
 		return domain.Order{}, err
 	}
 
+	// Retrieve lines for the order
+	rows, err := o.PG.GetDB().Query(
+		`SELECT id, product_id, qty, total FROM order_lines WHERE order_id = $1`,
+		id,
+	)
+
+	if err != nil {
+		return domain.Order{}, err
+	}
+
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+
+		}
+	}(rows)
+
+	for rows.Next() {
+		var line domain.OrderLine
+		err := rows.Scan(&line.ID, &line.ProductID, &line.Qty, &line.Total)
+		if err != nil {
+			return domain.Order{}, err
+		}
+
+		orderLines = append(orderLines, line)
+	}
+
+	order.Lines = orderLines
+
 	return order, nil
 }
 
-func (o *OrderRepoPg) Update(order domain.Order) error {
+func (o *OrderRepoPG) Update(order domain.Order) error {
 	query := `UPDATE orders SET user_id = $1, total = $2 WHERE id = $3`
 
 	_, err := o.PG.GetDB().Exec(
@@ -232,7 +286,7 @@ func (o *OrderRepoPg) Update(order domain.Order) error {
 	return nil
 }
 
-func (o *OrderRepoPg) Delete(id int) error {
+func (o *OrderRepoPG) Delete(id int) error {
 	query := `DELETE FROM orders WHERE id = $1`
 
 	_, err := o.PG.GetDB().Exec(

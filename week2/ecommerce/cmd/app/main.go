@@ -7,6 +7,7 @@ import (
 	authHandler "ecommerce/internal/auth/handler"
 	authDB "ecommerce/internal/auth/infra/db"
 	authUsecase "ecommerce/internal/auth/usecase"
+	orderHandler "ecommerce/internal/order/handler"
 
 	productHandler "ecommerce/internal/product/handler"
 	productDB "ecommerce/internal/product/infra/db"
@@ -16,7 +17,6 @@ import (
 	userUsecase "ecommerce/internal/user/usecase"
 	"ecommerce/middleware"
 
-	orderHandler "ecommerce/internal/order/handler"
 	orderDB "ecommerce/internal/order/infra/db"
 	orderUsecase "ecommerce/internal/order/usecase"
 
@@ -65,15 +65,18 @@ func main() {
 	routes.UserRoute(uh, mux)
 
 	// Product
-	productRe := productDB.NewProductRepoPG(pg)
-	productUC := productUsecase.NewProductUseCase(productRe)
+	productRepo := productDB.NewProductRepoPG(pg)
+	productUC := productUsecase.NewProductUseCase(productRepo)
 	pH := productHandler.NewProductHandler(productUC)
 	routes.ProductRoute(pH, mux)
 
 	// Order
-	orderRepo := orderDB.NewOrderRepoPg(pg)
+	orderRepo := orderDB.NewOrderRepoPG(pg)
 	orderUC := orderUsecase.NewOrderUseCase(orderRepo)
 	orderH := orderHandler.NewOrderHandler(orderUC)
+	invoiceService := orderUsecase.NewInvoiceService(orderRepo, userRepo, productRepo)
+	orderH.InvoiceService = invoiceService // Set the invoice service in the handler
+
 	routes.OrderRoute(orderH, mux)
 
 	wrappedMux := middleware.AuthMiddleware(mux)

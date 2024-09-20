@@ -14,10 +14,10 @@ type OrderUsecase interface {
 }
 
 type orderUsecase struct {
-	orderRepo db.OrderRepoPg
+	orderRepo db.OrderRepoPG
 }
 
-func NewOrderUseCase(orderRepo *db.OrderRepoPg) OrderUsecase {
+func NewOrderUseCase(orderRepo *db.OrderRepoPG) OrderUsecase {
 	return &orderUsecase{
 		orderRepo: *orderRepo,
 	}

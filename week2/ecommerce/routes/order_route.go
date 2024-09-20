@@ -7,4 +7,6 @@ import (
 
 func OrderRoute(handler *handler.OrderHandler, mux *http.ServeMux) {
 	mux.HandleFunc("/orders", handler.Handler)
+	mux.HandleFunc("/orders/print-invoice", handler.PrintInvoice)
+
 }
