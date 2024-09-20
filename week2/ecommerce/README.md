@@ -32,3 +32,9 @@ ecommerce/
 ├── .gitignore
 └── go.mod
 ```
+
+# With Pessimistic Lock
+![Alt text](static/images/with_lock.png "a title")
+
+# Without Pessimistic Lock
+![Alt text](static/images/without_lock.png "a title")
