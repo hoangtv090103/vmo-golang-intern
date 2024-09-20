@@ -2,7 +2,7 @@
 package main
 
 import (
-	"context"
+	//"context"
 	"ecommerce/config"
 	authHandler "ecommerce/internal/auth/handler"
 	authDB "ecommerce/internal/auth/infra/db"
@@ -45,7 +45,7 @@ func main() {
 	defer redis.Close()
 
 	// Initialize Context
-	ctx := context.Background()
+	//ctx := context.Background()
 
 	// Add middleware
 	mux := http.NewServeMux()
