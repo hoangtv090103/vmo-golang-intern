@@ -8,17 +8,16 @@ import (
 	authDB "ecommerce/internal/auth/infra/db"
 	authUsecase "ecommerce/internal/auth/usecase"
 	orderHandler "ecommerce/internal/order/handler"
-
+	orderDB "ecommerce/internal/order/infra/db"
+	orderUsecase "ecommerce/internal/order/usecase"
 	productHandler "ecommerce/internal/product/handler"
 	productDB "ecommerce/internal/product/infra/db"
 	productUsecase "ecommerce/internal/product/usecase"
+	"ecommerce/internal/reports"
 	userHandler "ecommerce/internal/user/handler"
 	userDB "ecommerce/internal/user/infra/db"
 	userUsecase "ecommerce/internal/user/usecase"
 	"ecommerce/middleware"
-
-	orderDB "ecommerce/internal/order/infra/db"
-	orderUsecase "ecommerce/internal/order/usecase"
 
 	"ecommerce/routes"
 	"github.com/joho/godotenv"
@@ -79,6 +78,11 @@ func main() {
 
 	routes.OrderRoute(orderH, mux)
 
+	// Report
+	reportRepo := reports.NewReportRepoPG(pg)
+	reportUC := reports.NewReportUsecase(reportRepo)
+	reportH := reports.NewReportHandler(*reportUC)
+	routes.ReportRoute(&reportH, mux)
 	wrappedMux := middleware.AuthMiddleware(mux)
 
 	// Combine the two ServeMux instances
