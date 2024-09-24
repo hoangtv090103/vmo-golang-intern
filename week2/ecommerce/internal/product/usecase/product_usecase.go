@@ -35,4 +35,6 @@ func (uc *ProductUseCase) DeleteProduct(id int) error {
 	return uc.productRepo.Delete(id)
 }
 
-
+func (uc *ProductUseCase) GetProductsByName(name string) ([]productDomain.Product, error) {
+	return uc.productRepo.GetByName(name)
+}

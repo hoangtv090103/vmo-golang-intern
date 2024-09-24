@@ -52,12 +52,11 @@ func (r *ReportRepoPG) GenerateReport(startDate, endDate string) (string, error)
 				   count(o.id)        as total_orders,
 				   avg(o.total_price) as avg_order_value,
 				   sum(o.total_price) as total_spent
-			   from users u
-				  LEFT JOIN orders o ON u.id = o.user_id
+			   FROM users u
+			       LEFT JOIN orders o ON u.id = o.user_id
 			   WHERE o.created_at BETWEEN $1 AND $2
 			   GROUP BY u.name
-			ORDER BY total_spent DESC NULLS LAST;
-			`
+			   ORDER BY total_spent DESC NULLS LAST;`
 
 	// Get Report Date
 	rows, err := r.PG.GetDB().Query(query, startDate, endDate)

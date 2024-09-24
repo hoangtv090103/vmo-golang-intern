@@ -86,6 +86,38 @@ func (p *ProductRepoPG) GetByID(id int) (productDomain.Product, error) {
 	return product, nil
 }
 
+func (p *ProductRepoPG) GetByName(name string) ([]productDomain.Product, error) {
+	var (
+		err      error
+		products []productDomain.Product
+		rows     *sql.Rows
+	)
+
+	query := `SELECT id, name, description, price, stock from products WHERE name ilike '%' || $1 || '%'`
+
+	rows, err = p.PG.GetDB().Query(
+		query,
+		name,
+	)
+
+	if err != nil {
+		return []productDomain.Product{}, err
+	}
+
+	for rows.Next() {
+		var product productDomain.Product
+		err = rows.Scan(&product.ID, &product.Name, &product.Description, &product.Price, &product.Stock)
+
+		if err != nil {
+			return []productDomain.Product{}, err
+		}
+
+		products = append(products, product)
+	}
+
+	return products, nil
+}
+
 func (p *ProductRepoPG) Update(product productDomain.Product) error {
 	query := `UPDATE products SET name = $1, description = $2, price = $3, stock = $4`
 

@@ -26,8 +26,11 @@ func (ph *ProductHandler) Handler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		if idStr := r.URL.Query().Get("id"); idStr != "" {
 			ph.GetProductByID(w, r)
+		} else if name := r.URL.Query().Get("name"); name != "" {
+			ph.GetProductsByName(w, r)
+
 		} else {
-			ph.GetAllProducts(w, r)
+			ph.GetAllProducts(w)
 		}
 	case http.MethodPut:
 		ph.UpdateProduct(w, r)
@@ -57,7 +60,7 @@ func (ph *ProductHandler) AddProduct(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
-func (ph *ProductHandler) GetAllProducts(w http.ResponseWriter, r *http.Request) {
+func (ph *ProductHandler) GetAllProducts(w http.ResponseWriter) {
 	var products []domain.Product
 	var err error
 
@@ -91,6 +94,29 @@ func (ph *ProductHandler) GetProductByID(w http.ResponseWriter, r *http.Request)
 
 	//Encode response
 	err = json.NewEncoder(w).Encode(product)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+}
+
+func (ph *ProductHandler) GetProductsByName(w http.ResponseWriter, r *http.Request) {
+	name := r.URL.Query().Get("name")
+
+	var products []domain.Product
+	var err error
+
+	products, err = ph.productUseCase.GetProductsByName(name)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = json.NewEncoder(w).Encode(products)
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
