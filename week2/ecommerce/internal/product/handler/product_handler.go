@@ -110,7 +110,7 @@ func (ph *ProductHandler) AddProduct(w http.ResponseWriter, r *http.Request) {
 	)
 
 	var filePath string
-	filePath, err = utils.UploadFileToS3(*s3Config, file, handler)
+	filePath, err = utils.UploadFileToS3(*s3Config, file, handler, "product_images")
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -252,7 +252,7 @@ func (ph *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) 
 	)
 
 	var filePath string
-	filePath, err = utils.UploadFileToS3(*s3Config, file, handler)
+	filePath, err = utils.UploadFileToS3(*s3Config, file, handler, "product_image")
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-func UploadFileToS3(s3Config config.S3Config, file multipart.File, handler *multipart.FileHeader) (string, error) {
+func UploadFileToS3(s3Config config.S3Config, file multipart.File, header *multipart.FileHeader, folder string) (string, error) {
 	sess, err := session.NewSession(
 		&aws.Config{
 			Region: aws.String(s3Config.Region),
@@ -33,8 +33,8 @@ func UploadFileToS3(s3Config config.S3Config, file multipart.File, handler *mult
 	svc := s3.New(sess)
 
 	// Create a unique file name using timestamp
-	fileExt := filepath.Ext(handler.Filename)
-	key := fmt.Sprintf("product_images/%d%s", time.Now().UnixNano(), fileExt)
+	fileExt := filepath.Ext(header.Filename)
+	key := fmt.Sprintf("%s/%d%s", folder, time.Now().UnixNano(), fileExt)
 
 	// Read file content into buffer
 	buffer := new(bytes.Buffer)
@@ -52,7 +52,7 @@ func UploadFileToS3(s3Config config.S3Config, file multipart.File, handler *mult
 			Bucket:        aws.String(s3Config.BucketName),
 			Key:           aws.String(key),
 			Body:          bytes.NewReader(buffer.Bytes()),
-			ContentLength: aws.Int64(handler.Size),
+			ContentLength: aws.Int64(header.Size),
 			ContentType:   aws.String(http.DetectContentType(buffer.Bytes())),
 			//ACL: aws.String("public-read"), // Make file publicly accessible
 

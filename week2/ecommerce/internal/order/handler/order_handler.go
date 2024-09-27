@@ -1,12 +1,16 @@
 package handler
 
 import (
+	"ecommerce/config"
 	"ecommerce/internal/order/domain"
 	"ecommerce/internal/order/usecase"
 	orderUtils "ecommerce/internal/order/utils"
 	utils "ecommerce/utils"
 	"encoding/json"
+	"mime/multipart"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -131,7 +135,53 @@ func (h *OrderHandler) PrintInvoice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/pdf")
-	w.Header().Set("Content-Disposition", "attachment; filename=invoice.pdf")
-	w.Write(pdfBytes)
+	// Create a temporary file to store the PDF
+	tempFile, err := os.CreateTemp("", "invoice-*.pdf")
+	if err != nil {
+		http.Error(w, "Failed to create temp file", http.StatusInternalServerError)
+		return
+	}
+	defer os.Remove(tempFile.Name())
+	defer tempFile.Close()
+
+	// Write the PDF bytes to the temporary file
+	if _, err := tempFile.Write(pdfBytes); err != nil {
+		http.Error(w, "Failed to write PDF to temp file", http.StatusInternalServerError)
+		return
+	}
+
+	// Reopen the file for reading
+	tempFile, err = os.Open(tempFile.Name())
+	if err != nil {
+		http.Error(w, "Failed to reopen temp file", http.StatusInternalServerError)
+		return
+	}
+	defer tempFile.Close()
+
+	// Upload Invoice to S3
+	s3Config := config.NewS3Config(
+		os.Getenv("AWS_REGION"),
+		os.Getenv("AWS_BUCKET_NAME"),
+		os.Getenv("AWS_ACCESS_KEY_ID"),
+		os.Getenv("AWS_SECRET_ACCESS_KEY"),
+	)
+
+	fileHeader := &multipart.FileHeader{
+		Filename: filepath.Base(tempFile.Name()),
+		Size:     int64(len(pdfBytes)),
+	}
+
+	pdfPath, err := utils.UploadFileToS3(
+		*s3Config,
+		tempFile,
+		fileHeader,
+		"invoices",
+	)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Write([]byte(pdfPath))
 }
