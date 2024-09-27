@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"ecommerce/config"
 	productDomain "ecommerce/internal/product/domain"
+	"strconv"
+	"strings"
 	// userDomain "ecommerce/internal/user/domain"
 	// "errors"
 )
@@ -19,13 +21,14 @@ func NewProductRepoPG(pg *config.PG) *ProductRepoPG {
 }
 
 func (p *ProductRepoPG) Create(product productDomain.Product) error {
-	query := `INSERT INTO products (name, description, price, stock) VALUES ($1, $2, $3, $4)`
+	query := `INSERT INTO products (name, description, price, stock, image_path) VALUES ($1, $2, $3, $4, $5)`
 	_, err := p.PG.GetDB().Exec(
 		query,
 		product.Name,
 		product.Description,
 		product.Price,
 		product.Stock,
+		product.ImagePath,
 	)
 
 	if err != nil {
@@ -36,7 +39,7 @@ func (p *ProductRepoPG) Create(product productDomain.Product) error {
 }
 
 func (p *ProductRepoPG) GetAll() ([]productDomain.Product, error) {
-	query := `SELECT id, name, price, stock, description FROM products`
+	query := `SELECT id, COALESCE(name, ''), COALESCE(price, 0.0), COALESCE(stock, 0), COALESCE(description, ''), COALESCE(image_path, '') FROM products`
 	rows, err := p.PG.GetDB().Query(query)
 
 	if err != nil {
@@ -54,7 +57,7 @@ func (p *ProductRepoPG) GetAll() ([]productDomain.Product, error) {
 
 	for rows.Next() {
 		var product productDomain.Product
-		err := rows.Scan(&product.ID, &product.Name, &product.Price, &product.Stock, &product.Description)
+		err := rows.Scan(&product.ID, &product.Name, &product.Price, &product.Stock, &product.Description, &product.ImagePath)
 
 		if err != nil {
 			return nil, err
@@ -72,12 +75,12 @@ func (p *ProductRepoPG) GetByID(id int) (productDomain.Product, error) {
 		product productDomain.Product
 	)
 
-	query := `SELECT id, name, description, price, stock FROM products WHERE id = $1`
+	query := `SELECT id, COALESCE(name, ''), COALESCE(price, 0.0), COALESCE(stock, 0), COALESCE(description, ''), COALESCE(image_path, '') FROM products WHERE id = $1`
 
 	err = p.PG.GetDB().QueryRow(
 		query,
 		id,
-	).Scan(&product.ID, &product.Name, &product.Description, &product.Price, &product.Stock)
+	).Scan(&product.ID, &product.Name, &product.Description, &product.Price, &product.Stock, &product.ImagePath)
 
 	if err != nil {
 		return productDomain.Product{}, err
@@ -93,7 +96,7 @@ func (p *ProductRepoPG) GetByName(name string) ([]productDomain.Product, error) 
 		rows     *sql.Rows
 	)
 
-	query := `SELECT id, name, description, price, stock from products WHERE name ilike '%' || $1 || '%'`
+	query := `SELECT id, COALESCE(name, ''), COALESCE(price, 0.0), COALESCE(stock, 0), COALESCE(description, ''), COALESCE(image_path, '') FROM products WHERE name ilike '%' || $1 || '%'`
 
 	rows, err = p.PG.GetDB().Query(
 		query,
@@ -106,7 +109,7 @@ func (p *ProductRepoPG) GetByName(name string) ([]productDomain.Product, error) 
 
 	for rows.Next() {
 		var product productDomain.Product
-		err = rows.Scan(&product.ID, &product.Name, &product.Description, &product.Price, &product.Stock)
+		err = rows.Scan(&product.ID, &product.Name, &product.Description, &product.Price, &product.Stock, &product.ImagePath)
 
 		if err != nil {
 			return []productDomain.Product{}, err
@@ -119,16 +122,45 @@ func (p *ProductRepoPG) GetByName(name string) ([]productDomain.Product, error) 
 }
 
 func (p *ProductRepoPG) Update(product productDomain.Product) error {
-	query := `UPDATE products SET name = $1, description = $2, price = $3, stock = $4`
+	// Initialize the query and arguments
+	query := "UPDATE products SET"
+	args := []interface{}{}
+	argCounter := 1
 
-	_, err := p.PG.GetDB().Exec(
-		query,
-		product.Name,
-		product.Description,
-		product.Price,
-		product.Stock,
-	)
+	// Check and append non-empty fields
+	if product.Name != "" {
+		query += " name = $" + strconv.Itoa(argCounter) + ","
+		args = append(args, product.Name)
+		argCounter++
+	}
+	if product.Description != "" {
+		query += " description = $" + strconv.Itoa(argCounter) + ","
+		args = append(args, product.Description)
+		argCounter++
+	}
+	if product.Price != 0 {
+		query += " price = $" + strconv.Itoa(argCounter) + ","
+		args = append(args, product.Price)
+		argCounter++
+	}
+	if product.Stock != 0 {
+		query += " stock = $" + strconv.Itoa(argCounter) + ","
+		args = append(args, product.Stock)
+		argCounter++
+	}
+	if product.ImagePath != "" {
+		query += " image_path = $" + strconv.Itoa(argCounter) + ","
+		args = append(args, product.ImagePath)
+		argCounter++
+	}
 
+	// Remove the trailing comma and add the WHERE clause
+	query = strings.TrimSuffix(query, ",")
+	query += " WHERE id = $" + strconv.Itoa(argCounter)
+	args = append(args, product.ID)
+
+	// Execute the query
+	_, err := p.PG.GetDB().Exec(query, args...)
 	if err != nil {
 		return err
 	}

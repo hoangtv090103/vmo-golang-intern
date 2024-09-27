@@ -7,6 +7,7 @@ type Product struct {
 	Description string  `json:"description"`
 	Price       float64 `json:"price"`
 	Stock       int     `json:"stock"`
+	ImagePath   string  `json:"image_path"`
 }
 
 func (p *Product) GetID() int {
@@ -29,6 +30,8 @@ func (p *Product) GetStock() int {
 	return p.Stock
 }
 
+func (p *Product) GetImagePath() string { return p.ImagePath }
+
 func (p *Product) SetName(name string) {
 	p.Name = name
 }
@@ -43,4 +46,8 @@ func (p *Product) SetPrice(price float64) {
 
 func (p *Product) SetStock(stock int) {
 	p.Stock = stock
+}
+
+func (p *Product) SetImagePath(path string) {
+	p.ImagePath = path
 }
