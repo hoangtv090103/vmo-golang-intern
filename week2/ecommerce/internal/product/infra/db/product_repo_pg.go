@@ -75,7 +75,7 @@ func (p *ProductRepoPG) GetByID(id int) (productDomain.Product, error) {
 		product productDomain.Product
 	)
 
-	query := `SELECT id, COALESCE(name, ''), COALESCE(price, 0.0), COALESCE(stock, 0), COALESCE(description, ''), COALESCE(image_path, '') FROM products WHERE id = $1`
+	query := `SELECT id, COALESCE(name, ''), COALESCE(description, ''), COALESCE(price, 0.0), COALESCE(stock, 0), COALESCE(image_path, '') FROM products WHERE id = $1`
 
 	err = p.PG.GetDB().QueryRow(
 		query,

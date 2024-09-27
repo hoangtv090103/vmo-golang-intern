@@ -6,10 +6,9 @@ import (
 	"ecommerce/internal/product/usecase"
 	"ecommerce/utils"
 	"encoding/json"
-	"io"
+	"fmt"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
 )
 
@@ -216,6 +215,7 @@ func (ph *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) 
 	var product domain.Product
 	var err error
 
+	product.ID = id
 	product.SetName(r.FormValue("name"))
 	product.SetDescription(r.FormValue("description"))
 	price, _ := strconv.ParseFloat(r.FormValue("price"), 64)
@@ -244,21 +244,31 @@ func (ph *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) 
 	}
 
 	/// Create a new file in the uploads directory
-	filePath := filepath.Join("uploads", handler.Filename)
-	dst, err := os.Create(filePath)
+	s3Config := config.NewS3Config(
+		os.Getenv("AWS_REGION"),
+		os.Getenv("AWS_BUCKET_NAME"),
+		os.Getenv("AWS_ACCESS_KEY_ID"),
+		os.Getenv("AWS_SECRET_ACCESS_KEY"),
+	)
+
+	var filePath string
+	filePath, err = utils.UploadFileToS3(*s3Config, file, handler)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	// Store the file path in the product struct
+	product.SetImagePath(filePath)
+	err = ph.productUseCase.UpdateProduct(product)
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	defer dst.Close()
-
-	// Copy the uploaded file to the destination file
-	_, err = io.Copy(dst, file)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(fmt.Sprintf("Updated Product with id (%d)", id)))
 }
 
 func (ph *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
