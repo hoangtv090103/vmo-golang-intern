@@ -109,7 +109,7 @@ func (p *ProductRepoPG) GetByName(name string) ([]productDomain.Product, error) 
 
 	for rows.Next() {
 		var product productDomain.Product
-		err = rows.Scan(&product.ID, &product.Name, &product.Description, &product.Price, &product.Stock, &product.ImagePath)
+		err = rows.Scan(&product.ID, &product.Name, &product.Price, &product.Stock, &product.Description, &product.ImagePath)
 
 		if err != nil {
 			return []productDomain.Product{}, err

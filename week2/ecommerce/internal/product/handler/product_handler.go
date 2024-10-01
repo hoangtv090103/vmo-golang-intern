@@ -4,6 +4,7 @@ import (
 	"ecommerce/config"
 	"ecommerce/internal/product/domain"
 	"ecommerce/internal/product/usecase"
+	"ecommerce/middleware"
 	"ecommerce/utils"
 	"encoding/json"
 	"fmt"
@@ -25,20 +26,19 @@ func NewProductHandler(productUseCase *usecase.ProductUseCase) *ProductHandler {
 func (ph *ProductHandler) Handler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
-		ph.AddProduct(w, r)
+		middleware.AdminOnlyMiddleware(http.HandlerFunc(ph.AddProduct)).ServeHTTP(w, r)
 	case http.MethodGet:
 		if idStr := r.URL.Query().Get("id"); idStr != "" {
 			ph.GetProductByID(w, r)
 		} else if name := r.URL.Query().Get("name"); name != "" {
 			ph.GetProductsByName(w, r)
-
 		} else {
 			ph.GetAllProducts(w)
 		}
 	case http.MethodPut:
-		ph.UpdateProduct(w, r)
+		middleware.AdminOnlyMiddleware(http.HandlerFunc(ph.UpdateProduct)).ServeHTTP(w, r)
 	case http.MethodDelete:
-		ph.DeleteProduct(w, r)
+		middleware.AdminOnlyMiddleware(http.HandlerFunc(ph.DeleteProduct)).ServeHTTP(w, r)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -136,7 +136,7 @@ func (ph *ProductHandler) AddProduct(w http.ResponseWriter, r *http.Request) {
 
 	// Respond with success
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("Product and image uploaded successfully"))
+	w.Write([]byte("Product created successfully"))
 }
 
 func (ph *ProductHandler) GetAllProducts(w http.ResponseWriter) {

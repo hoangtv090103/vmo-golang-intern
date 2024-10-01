@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"ecommerce/internal/auth/utils"
+	"fmt"
 	"net/http"
 )
 
@@ -24,6 +25,14 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 		ctx := context.WithValue(r.Context(), "username", claims.Username)
 		ctx = context.WithValue(r.Context(), "role", claims.Role)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		r = r.WithContext(ctx)
+
+		role, ok := r.Context().Value("role").(string)
+		if !ok {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+		fmt.Println(role)
+		next.ServeHTTP(w, r)
 	})
 }
