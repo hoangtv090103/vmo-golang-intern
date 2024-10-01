@@ -23,6 +23,9 @@ import (
 	"github.com/joho/godotenv"
 	"log"
 	"net/http"
+
+	_ "ecommerce/docs"               // Import the generated docs
+	"github.com/swaggo/http-swagger" // Import the http-swagger package
 )
 
 func main() {
@@ -88,6 +91,11 @@ func main() {
 	// Combine the two ServeMux instances
 	http.Handle("/", wrappedMux)
 	http.Handle("/auth/", http.StripPrefix("/auth", authMux))
+
+	// Swagger handler
+	http.Handle("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8080/swagger/doc.json"), //The url pointing to API definition
+	))
 
 	log.Println("Server is running on port 8080")
 	err = http.ListenAndServe(":8080", nil)

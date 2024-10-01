@@ -33,6 +33,18 @@ func (uh *UserHandler) Handler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// AddUser handles adding a new user
+//
+//	@Summary		Add a new user
+//	@Description	Add a new user to the system
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			user	body		domain.User	true	"User data"
+//	@Success		200		{string}	string		"User added successfully"
+//	@Failure		400		{string}	string		"Bad Request"
+//	@Failure		500		{string}	string		"Internal Server Error"
+//	@Router			/users [post]
 func (uh *UserHandler) AddUser(w http.ResponseWriter, r *http.Request) {
 	var user domain.User
 	var err error
@@ -49,6 +61,16 @@ func (uh *UserHandler) AddUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetAllUsers handles retrieving all users
+//
+//	@Summary		Get all users
+//	@Description	Retrieve a list of all users
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{array}		domain.User
+//	@Failure		500	{string}	string	"Internal Server Error"
+//	@Router			/users [get]
 func (uh *UserHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	var users []domain.User
 	var err error
@@ -73,6 +95,18 @@ func (uh *UserHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 }
 
+// UpdateUser handles updating an existing user
+//
+//	@Summary		Update a user
+//	@Description	Update details of an existing user
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			user	body		domain.User	true	"User data"
+//	@Success		200		{string}	string		"User updated successfully"
+//	@Failure		400		{string}	string		"Bad Request"
+//	@Failure		500		{string}	string		"Internal Server Error"
+//	@Router			/users [put]
 func (uh *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	var user domain.User
 	var err error
@@ -93,6 +127,18 @@ func (uh *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// DeleteUser handles deleting a user by its ID
+//
+//	@Summary		Delete a user
+//	@Description	Delete a user by its ID
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	query		int		true	"User ID"
+//	@Success		200	{string}	string	"User deleted successfully"
+//	@Failure		400	{string}	string	"Bad Request"
+//	@Failure		500	{string}	string	"Internal Server Error"
+//	@Router			/users [delete]
 func (uh *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	var err error
 

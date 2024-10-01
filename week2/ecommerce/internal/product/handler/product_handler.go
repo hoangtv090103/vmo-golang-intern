@@ -44,6 +44,22 @@ func (ph *ProductHandler) Handler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// AddProduct handles the addition of a new product
+//
+//	@Summary		Add a new product
+//	@Description	Add a new product with details and image
+//	@Tags			products
+//	@Accept			multipart/form-data
+//	@Produce		json
+//	@Param			name		formData	string	true	"Product Name"
+//	@Param			description	formData	string	true	"Product Description"
+//	@Param			price		formData	number	true	"Product Price"
+//	@Param			stock		formData	int		true	"Product Stock"
+//	@Param			image		formData	file	true	"Product Image"
+//	@Success		201			{string}	string	"Product created successfully"
+//	@Failure		400			{string}	string	"Bad Request"
+//	@Failure		500			{string}	string	"Internal Server Error"
+//	@Router			/products [post]
 func (ph *ProductHandler) AddProduct(w http.ResponseWriter, r *http.Request) {
 	var product domain.Product
 	var err error
@@ -139,6 +155,16 @@ func (ph *ProductHandler) AddProduct(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Product created successfully"))
 }
 
+// GetAllProducts handles fetching all products
+//
+//	@Summary		Get all products
+//	@Description	Get a list of all products
+//	@Tags			products
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{array}		domain.Product
+//	@Failure		500	{string}	string	"Internal Server Error"
+//	@Router			/products [get]
 func (ph *ProductHandler) GetAllProducts(w http.ResponseWriter) {
 	var products []domain.Product
 	var err error
@@ -157,6 +183,18 @@ func (ph *ProductHandler) GetAllProducts(w http.ResponseWriter) {
 	}
 }
 
+// GetProductByID godoc
+//
+//	@Summary		Get a product by ID
+//	@Description	Get a product by ID
+//	@Tags			products
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		int				true	"Product ID"
+//	@Success		200	{object}	domain.Product	"OK"
+//	@Failure		404	{string}	string			"Not found"
+//	@Failure		500	{string}	string			"Internal server error"
+//	@Router			/products/{id} [get]
 func (ph *ProductHandler) GetProductByID(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
 	id, err := strconv.Atoi(idStr)
@@ -181,6 +219,18 @@ func (ph *ProductHandler) GetProductByID(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("Content-Type", "application/json")
 }
 
+// GetProductsByName handles fetching products by name
+//
+//	@Summary		Get products by name
+//	@Description	Get a list of products by name
+//	@Tags			products
+//	@Accept			json
+//	@Produce		json
+//	@Param			name	query		string	true	"Product Name"
+//	@Success		200		{array}		domain.Product
+//	@Failure		400		{string}	string	"Bad Request"
+//	@Failure		500		{string}	string	"Internal Server Error"
+//	@Router			/products [get]
 func (ph *ProductHandler) GetProductsByName(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 
@@ -204,6 +254,23 @@ func (ph *ProductHandler) GetProductsByName(w http.ResponseWriter, r *http.Reque
 	w.Header().Set("Content-Type", "application/json")
 }
 
+// UpdateProduct handles updating an existing product
+//
+//	@Summary		Update a product
+//	@Description	Update details of an existing product
+//	@Tags			products
+//	@Accept			multipart/form-data
+//	@Produce		json
+//	@Param			id			query		int		true	"Product ID"
+//	@Param			name		formData	string	false	"Product Name"
+//	@Param			description	formData	string	false	"Product Description"
+//	@Param			price		formData	number	false	"Product Price"
+//	@Param			stock		formData	int		false	"Product Stock"
+//	@Param			image		formData	file	false	"Product Image"
+//	@Success		200			{string}	string	"Updated Product with id"
+//	@Failure		400			{string}	string	"Bad Request"
+//	@Failure		500			{string}	string	"Internal Server Error"
+//	@Router			/products [put]
 func (ph *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
 	id := utils.StrToInt(idStr)
@@ -271,6 +338,18 @@ func (ph *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) 
 	w.Write([]byte(fmt.Sprintf("Updated Product with id (%d)", id)))
 }
 
+// DeleteProduct handles deleting a product by its ID
+//
+//	@Summary		Delete a product
+//	@Description	Delete a product by its ID
+//	@Tags			products
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	query		int		true	"Product ID"
+//	@Success		200	{string}	string	"Product deleted successfully"
+//	@Failure		400	{string}	string	"Bad Request"
+//	@Failure		500	{string}	string	"Internal Server Error"
+//	@Router			/products [delete]
 func (ph *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
 	id := utils.StrToInt(idStr)

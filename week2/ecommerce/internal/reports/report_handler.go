@@ -20,6 +20,18 @@ func NewReportHandler(reportUsecase ReportUsecase) ReportHandler {
 	}
 }
 
+// HandleReport handles generating a report
+//
+//	@Summary		Generate a report
+//	@Description	Generate an Excel report for a given date range
+//	@Tags			reports
+//	@Accept			json
+//	@Produce		json
+//	@Param			dateRange	body		DateRange			true	"Date range"
+//	@Success		200			{object}	map[string]string	"path"
+//	@Failure		400			{string}	string				"Bad Request"
+//	@Failure		500			{string}	string				"Internal Server Error"
+//	@Router			/reports [post]
 func (h ReportHandler) HandleReport(w http.ResponseWriter, r *http.Request) {
 	// Generate Excel report
 	switch r.Method {

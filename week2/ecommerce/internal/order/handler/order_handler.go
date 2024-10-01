@@ -57,6 +57,18 @@ func (oh *OrderHandler) Handler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// AddOrder godoc
+//
+//	@Summary		Add a new order
+//	@Description	Add a new order
+//	@Tags			orders
+//	@Accept			json
+//	@Produce		json
+//	@Param			order	body		domain.Order	true	"Order"
+//	@Success		201		{string}	string			"Created"
+//	@Failure		400		{string}	string			"Bad request"
+//	@Failure		500		{string}	string			"Internal server error"
+//	@Router			/orders [post]
 func (oh *OrderHandler) AddOrder(w http.ResponseWriter, r *http.Request) {
 	var order domain.Order
 	if err := json.NewDecoder(r.Body).Decode(&order); err != nil {
@@ -72,6 +84,16 @@ func (oh *OrderHandler) AddOrder(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
+// GetAllOrders godoc
+//
+//	@Summary		Get all orders
+//	@Description	Get all orders
+//	@Tags			orders
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{array}		domain.Order
+//	@Failure		500	{string}	string	"Internal server error"
+//	@Router			/orders [get]
 func (oh *OrderHandler) GetAllOrders(w http.ResponseWriter) {
 	orders, err := oh.orderUsecase.GetAllOrders()
 	if err != nil {
@@ -83,6 +105,18 @@ func (oh *OrderHandler) GetAllOrders(w http.ResponseWriter) {
 	json.NewEncoder(w).Encode(orders)
 }
 
+// GetOrderById godoc
+//
+//	@Summary		Get order by ID
+//	@Description	Get order by ID
+//	@Tags			orders
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		int	true	"Order ID"
+//	@Success		200	{object}	domain.Order
+//	@Failure		400	{string}	string	"Bad request"
+//	@Failure		500	{string}	string	"Internal server error"
+//	@Router			/orders/{id} [get]
 func (oh *OrderHandler) GetOrderById(w http.ResponseWriter, id string) {
 	orderID, err := strconv.Atoi(id)
 	if err != nil {
@@ -100,6 +134,17 @@ func (oh *OrderHandler) GetOrderById(w http.ResponseWriter, id string) {
 	json.NewEncoder(w).Encode(order)
 }
 
+// GetUserOrders godoc
+//
+//	@Summary		Get orders for a user
+//	@Description	Get orders for a user
+//	@Tags			orders
+//	@Accept			json
+//	@Produce		json
+//	@Param			username	path		string	true	"Username"
+//	@Success		200			{array}		domain.Order
+//	@Failure		500			{string}	string	"Internal server error"
+//	@Router			/orders/user/{username} [get]
 func (oh *OrderHandler) GetUserOrders(w http.ResponseWriter, username string) {
 	orders, err := oh.orderUsecase.GetUserOrders(username)
 	if err != nil {
@@ -111,6 +156,18 @@ func (oh *OrderHandler) GetUserOrders(w http.ResponseWriter, username string) {
 	json.NewEncoder(w).Encode(orders)
 }
 
+// UpdateOrder godoc
+//
+//	@Summary		Update an order
+//	@Description	Update an order
+//	@Tags			orders
+//	@Accept			json
+//	@Produce		json
+//	@Param			order	body		domain.Order	true	"Order"
+//	@Success		200		{string}	string			"OK"
+//	@Failure		400		{string}	string			"Bad request"
+//	@Failure		500		{string}	string			"Internal server error"
+//	@Router			/orders [put]
 func (oh *OrderHandler) UpdateOrder(w http.ResponseWriter, r *http.Request) {
 	var order domain.Order
 	if err := json.NewDecoder(r.Body).Decode(&order); err != nil {
@@ -126,6 +183,18 @@ func (oh *OrderHandler) UpdateOrder(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// DeleteOrder godoc
+//
+//	@Summary		Delete an order
+//	@Description	Delete an order
+//	@Tags			orders
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	query		int		true	"Order ID"
+//	@Success		204	{string}	string	"No Content"
+//	@Failure		400	{string}	string	"Bad request"
+//	@Failure		500	{string}	string	"Internal server error"
+//	@Router			/orders [delete]
 func (oh *OrderHandler) DeleteOrder(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
 	orderID, err := strconv.Atoi(idStr)
@@ -142,6 +211,17 @@ func (oh *OrderHandler) DeleteOrder(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// PrintInvoice godoc
+//
+//	@Summary		Print an invoice
+//	@Description	Print an invoice for an order
+//	@Tags			orders
+//	@Accept			json
+//	@Produce		json
+//	@Param			order_id	query		int		true	"Order ID"
+//	@Success		200			{string}	string	"PDF URL"
+//	@Failure		500			{string}	string	"Internal server error"
+//	@Router			/orders/invoice [get]
 func (h *OrderHandler) PrintInvoice(w http.ResponseWriter, r *http.Request) {
 	orderId := utils.StrToInt(r.URL.Query().Get("order_id"))
 	invoiceData, err := h.InvoiceService.GenerateInvoiceData(orderId)
