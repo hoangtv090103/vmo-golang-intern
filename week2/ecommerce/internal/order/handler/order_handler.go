@@ -5,6 +5,7 @@ import (
 	"ecommerce/internal/order/domain"
 	"ecommerce/internal/order/usecase"
 	orderUtils "ecommerce/internal/order/utils"
+	"ecommerce/middleware"
 	utils "ecommerce/utils"
 	"encoding/json"
 	"mime/multipart"
@@ -30,18 +31,27 @@ func NewOrderHandler(orderUsecase usecase.OrderUsecase) *OrderHandler {
 func (oh *OrderHandler) Handler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
-		oh.AddOrder(w, r)
+		middleware.UserOnlyMiddleware(http.HandlerFunc(oh.AddOrder)).ServeHTTP(w, r)
 	case http.MethodGet:
 		vars := mux.Vars(r)
-		if id, ok := vars["id"]; ok {
-			oh.GetOrderById(w, id)
+		if role, ok := r.Context().Value("role").(string); ok && role == "admin" {
+			if id, ok := vars["id"]; ok {
+				oh.GetOrderById(w, id)
+			} else {
+				oh.GetAllOrders(w)
+			}
 		} else {
-			oh.GetAllOrders(w)
+			username, ok := r.Context().Value("username").(string)
+			if !ok {
+				return
+			}
+
+			oh.GetUserOrders(w, username)
 		}
 	case http.MethodPut:
-		oh.UpdateOrder(w, r)
+		middleware.AdminOnlyMiddleware(http.HandlerFunc(oh.UpdateOrder)).ServeHTTP(w, r)
 	case http.MethodDelete:
-		oh.DeleteOrder(w, r)
+		middleware.AdminOnlyMiddleware(http.HandlerFunc(oh.DeleteOrder)).ServeHTTP(w, r)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -88,6 +98,17 @@ func (oh *OrderHandler) GetOrderById(w http.ResponseWriter, id string) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(order)
+}
+
+func (oh *OrderHandler) GetUserOrders(w http.ResponseWriter, username string) {
+	orders, err := oh.orderUsecase.GetUserOrders(username)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(orders)
 }
 
 func (oh *OrderHandler) UpdateOrder(w http.ResponseWriter, r *http.Request) {

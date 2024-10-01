@@ -269,6 +269,84 @@ func (o *OrderRepoPG) GetByID(id int) (domain.Order, error) {
 	return order, nil
 }
 
+func (o *OrderRepoPG) GetUserOrders(username string) ([]domain.Order, error) {
+	var (
+		orders []domain.Order
+		err    error
+		userId int
+	)
+
+	userQuery := `SELECT id FROM users WHERE username = $1`
+	err = o.PG.GetDB().QueryRow(userQuery, username).Scan(&userId)
+
+	if err != nil {
+		return []domain.Order{}, err
+	}
+
+	query := `SELECT id, user_id, created_at, total_price FROM orders WHERE user_id = $1`
+	queryLines := `SELECT id, product_id, qty, total FROM order_lines WHERE order_id = $1`
+	rows, err := o.PG.GetDB().Query(query, userId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			return
+		}
+	}(rows)
+
+	for rows.Next() {
+		var order domain.Order
+		err := rows.Scan(&order.ID, &order.UserID, &order.OrderDate, &order.TotalPrice)
+		if err != nil {
+			return nil, err
+		}
+
+		// Retrieve user details
+		err = o.PG.GetDB().QueryRow(`SELECT id, name, username, email, balance FROM users WHERE id = $1`, order.UserID).Scan(
+			&order.User.ID, &order.User.Name, &order.User.Username, &order.User.Email, &order.User.Balance)
+		if err != nil {
+			return nil, err
+		}
+
+		// Retrieve order lines
+		rowsLines, err := o.PG.GetDB().Query(queryLines, order.ID)
+		if err != nil {
+			return nil, err
+		}
+		defer func(rowsLines *sql.Rows) {
+			err := rowsLines.Close()
+			if err != nil {
+				return
+			}
+		}(rowsLines)
+
+		for rowsLines.Next() {
+			var line domain.OrderLine
+			err := rowsLines.Scan(&line.ID, &line.ProductID, &line.Qty, &line.Total)
+			if err != nil {
+				return nil, err
+			}
+
+			// Retrieve product details
+			err = o.PG.GetDB().QueryRow(`SELECT id, name, price, stock FROM products WHERE id = $1`, line.ProductID).Scan(
+				&line.Product.ID, &line.Product.Name, &line.Product.Price, &line.Product.Stock)
+			if err != nil {
+				return nil, err
+			}
+
+			order.Lines = append(order.Lines, line)
+		}
+
+		orders = append(orders, order)
+	}
+
+	return orders, nil
+}
+
 func (o *OrderRepoPG) Update(order domain.Order) error {
 	query := `UPDATE orders SET user_id = $1, total = $2 WHERE id = $3`
 

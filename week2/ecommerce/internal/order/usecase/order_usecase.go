@@ -8,6 +8,7 @@ import (
 type OrderUsecase interface {
 	CreateOrder(order domain.Order) error
 	GetAllOrders() ([]domain.Order, error)
+	GetUserOrders(username string) ([]domain.Order, error)
 	GetOrderById(id int) (domain.Order, error)
 	UpdateOrder(order domain.Order) error
 	DeleteOrder(id int) error
@@ -41,4 +42,8 @@ func (uc *orderUsecase) UpdateOrder(order domain.Order) error {
 
 func (uc *orderUsecase) DeleteOrder(id int) error {
 	return uc.orderRepo.Delete(id)
+}
+
+func (uc *orderUsecase) GetUserOrders(username string) ([]domain.Order, error) {
+	return uc.orderRepo.GetUserOrders(username)
 }
