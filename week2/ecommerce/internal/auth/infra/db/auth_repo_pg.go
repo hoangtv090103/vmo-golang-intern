@@ -47,6 +47,16 @@ func (ar AuthRepoPG) Login(username string, password string) (domain.Auth, error
 		return domain.Auth{}, errors.New("invalid password")
 	}
 
+	// Get user role_id
+	err = ar.PG.DB.QueryRow(
+		`SELECT role_name FROM roles LEFT JOIN user_roles ON roles.id = user_roles.role_id WHERE user_roles.auth_id = $1`,
+		auth.ID,
+	).Scan(&auth.Role)
+
+	if err != nil {
+		return domain.Auth{}, err
+	}
+
 	return auth, nil
 }
 
@@ -73,7 +83,11 @@ func (ar AuthRepoPG) Register(auth domain.Auth) error {
 		return err
 	}
 
-	tx, err := ar.PG.DB.Begin()
+	tx, err := ar.PG.GetDB().Begin()
+
+	if err != nil {
+		return err
+	}
 
 	defer func() {
 		if err != nil {
@@ -99,8 +113,15 @@ func (ar AuthRepoPG) Register(auth domain.Auth) error {
 		return err
 	}
 
-	authQuery := "INSERT INTO auth (user_id, username, email, password) VALUES ($1, $2, $3, $4)"
-	_, err = ar.PG.DB.Exec(authQuery, auth.UserID, auth.Username, auth.Email, hashPassword)
+	authQuery := "INSERT INTO auth (user_id, username, email, password) VALUES ($1, $2, $3, $4) RETURNING id"
+	err = ar.PG.DB.QueryRow(authQuery, auth.UserID, auth.Username, auth.Email, hashPassword).Scan(&auth.ID)
+
+	if err != nil {
+		return err
+	}
+
+	userRoleQuery := "INSERT INTO user_roles (auth_id, role_id) VALUES ($1, (SELECT id FROM roles WHERE role_name = 'user'))"
+	_, err = ar.PG.DB.Exec(userRoleQuery, auth.ID)
 
 	if err != nil {
 		return err

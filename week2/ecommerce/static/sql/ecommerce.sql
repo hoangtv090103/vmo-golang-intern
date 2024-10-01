@@ -7,6 +7,35 @@ CREATE TABLE users
     balance  DECIMAL(10, 2) NOT NULL DEFAULT 0
 );
 
+-- Create roles table
+CREATE TABLE roles
+(
+    id        SERIAL PRIMARY KEY,
+    role_name VARCHAR(50) UNIQUE NOT NULL
+);
+
+-- Insert default roles
+INSERT INTO roles (role_name)
+VALUES ('admin'),
+       ('user');
+
+-- Create user_roles table (junction table)
+CREATE TABLE user_roles
+(
+    auth_id INT NOT NULL,
+    role_id INT NOT NULL,
+    PRIMARY KEY (auth_id, role_id),
+    FOREIGN KEY (auth_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (role_id) REFERENCES roles (id) ON DELETE CASCADE
+);
+
+-- Set all existing users to have the 'user' role
+INSERT INTO user_roles (auth_id, role_id)
+SELECT id, 2
+FROM auth;
+
+
+
 CREATE TABLE products
 (
     id          SERIAL PRIMARY KEY,
@@ -14,7 +43,7 @@ CREATE TABLE products
     description TEXT,
     price       DECIMAL(10, 2) NOT NULL,
     stock       INT            NOT NULL,
-    image_path VARCHAR(255)
+    image_path  VARCHAR(255)
 );
 
 -- Create an index on the name column to improve search performance
