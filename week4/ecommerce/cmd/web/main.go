@@ -2,6 +2,7 @@
 package main
 
 import (
+	"database/sql"
 	accountHandler "ecommerce/internal/auth/handler"
 	orderHandler "ecommerce/internal/order/handler"
 	productHandler "ecommerce/internal/product/handler"
@@ -32,7 +33,12 @@ func main() {
 
 	dbInstance := db.GetDBInstance()
 
-	defer dbInstance.Close()
+	defer func(dbInstance *sql.DB) {
+		err := dbInstance.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(dbInstance)
 
 	// Initialize application
 	app := setupApplication(dbInstance)

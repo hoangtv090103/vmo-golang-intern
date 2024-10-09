@@ -46,3 +46,7 @@ func (p *Product) SetImagePath(path string) *Product {
 	p.ImagePath = path
 	return p
 }
+
+func (p *Product) Build() *Product {
+    return p
+}

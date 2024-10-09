@@ -4,8 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"ecommerce/internal/product/entity"
-	"github.com/jmoiron/sqlx"
+	"errors"
 	"strings"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type ProductPGRepository struct {
@@ -19,7 +21,18 @@ func NewProductPGRepository(db *sql.DB) *ProductPGRepository {
 }
 
 func (pr *ProductPGRepository) Create(ctx context.Context, product *entity.Product) error {
-	query := `INSERT INTO products (name, description, price, stock, image_path) VALUES ($1, $2, $3, $4, $5)`
+	if product.Price < 0 {
+		return errors.New("invalid price")
+	}
+
+	if product.Stock < 0 {
+		return errors.New("invalid stock")
+	}
+	
+	query := `INSERT INTO products (name, description, price, stock, image_path) VALUES (?, ?, ?, ?, ?)`
+
+	query = sqlx.Rebind(sqlx.DOLLAR, query)
+	
 	_, err := pr.DB.ExecContext(
 		ctx,
 		query,
@@ -28,7 +41,7 @@ func (pr *ProductPGRepository) Create(ctx context.Context, product *entity.Produ
 		product.Price,
 		product.Stock,
 		product.ImagePath,
-)
+	)
 
 	if err != nil {
 		return err

@@ -4,6 +4,7 @@ import (
 	"context"
 	"ecommerce/internal/product/entity"
 	"ecommerce/internal/product/repository"
+	"errors"
 )
 
 type ProductUsecase struct {
@@ -17,6 +18,12 @@ func NewProductUsecase(productRepo repository.IProductRepository) *ProductUsecas
 }
 
 func (pu *ProductUsecase) CreateProduct(ctx context.Context, product *entity.Product) error {
+    if product.Price < 0 {
+		return errors.New("invalid price")
+	}
+	if product.Stock < 0 {
+		return errors.New("invalid stock")
+	}
 	return pu.productRepo.Create(ctx, product)
 }
 

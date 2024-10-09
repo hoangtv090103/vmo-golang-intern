@@ -9,6 +9,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// Update your AccountUsecase to use custom errors for better testing
+ var (
+	ErrUsernameExists = errors.New("username already exists")
+	ErrEmailExists    = errors.New("email already exists")
+)
+
 type IAccountUsecase interface {
 	Register(ctx context.Context, account *entity.Account) error
 	Login(ctx context.Context, username, password string) (*entity.Account, error)
@@ -33,12 +39,12 @@ func (u *AccountUsecase) Register(ctx context.Context, account *entity.Account) 
 	existingAccount, err := u.repo.Login(ctx, &entity.Account{Username: account.Username})
 
 	if err == nil && existingAccount != nil {
-		return errors.New("username already exists")
+		return ErrUsernameExists
 	}
 
 	existingAccount, err = u.repo.Login(ctx, &entity.Account{Email: account.Email})
 	if err == nil && existingAccount != nil {
-		return errors.New("email already exists")
+		return ErrEmailExists
 	}
 
 	// Hash the password
