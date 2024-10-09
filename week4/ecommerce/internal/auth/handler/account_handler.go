@@ -3,6 +3,7 @@ package handler
 import (
 	"ecommerce/internal/auth/entity"
 	"ecommerce/internal/auth/usecase"
+	globalUtils "ecommerce/pkg/utils"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -45,5 +46,11 @@ func (h *AccountHandler) Login(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(account)
+	// Generate JWT token
+	token, err := globalUtils.GenerateJWT(account.Username, account.Role)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"token": token})
 }

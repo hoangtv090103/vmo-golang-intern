@@ -6,6 +6,7 @@ import (
 	orderHandler "ecommerce/internal/order/handler"
 	productHandler "ecommerce/internal/product/handler"
 	"ecommerce/internal/user/userHandler"
+	"ecommerce/pkg/middleware"
 
 	"ecommerce/pkg/db"
 	"log"
@@ -50,30 +51,37 @@ func (app *application) setupRoutes(fiberApp *fiber.App) {
 		return c.SendString("Hello")
 	})
 
-	// Auth routes
+	// Public routes (no auth required)
 	fiberApp.Post("/login", app.accountHandler.Login)
 	fiberApp.Post("/register", app.accountHandler.Register)
 
+	// Apply auth middleware to all other routes
+	api := fiberApp.Group("/api", middleware.AuthMiddleware())
+
+	// Auth routes
+	api.Post("/login", app.accountHandler.Login)
+	api.Post("/register", app.accountHandler.Register)
+
 	// User routes
-	fiberApp.Get("/users", app.userHandler.GetAllUsers)
-	fiberApp.Post("/users", app.userHandler.AddUser)
-	fiberApp.Put("/users/:id", app.userHandler.UpdateUser)
-	fiberApp.Delete("/users/:id", app.userHandler.DeleteUser)
+	api.Get("/users", app.userHandler.GetAllUsers)
+	api.Post("/users", app.userHandler.AddUser)
+	api.Put("/users/:id", app.userHandler.UpdateUser)
+	api.Delete("/users/:id", app.userHandler.DeleteUser)
 
 	// Product routes
-	fiberApp.Get("/products", app.productHandler.GetAllProducts)
-	fiberApp.Get("/products/:id", app.productHandler.GetProductByID)
-	fiberApp.Post("/products", app.productHandler.AddProduct)
-	fiberApp.Put("/products/:id", app.productHandler.UpdateProduct)
-	fiberApp.Delete("/products/:id", app.productHandler.DeleteProduct)
+	api.Get("/products", app.productHandler.GetAllProducts)
+	api.Get("/products/:id", app.productHandler.GetProductByID)
+	api.Post("/products", middleware.IsAdminMiddleware(), app.productHandler.AddProduct)
+	api.Put("/products/:id", middleware.IsAdminMiddleware(), app.productHandler.UpdateProduct)
+	api.Delete("/products/:id", middleware.IsAdminMiddleware(), app.productHandler.DeleteProduct)
 
 	// Order routes
-	fiberApp.Get("/orders", app.orderHandler.GetAllOrders)
-	fiberApp.Get("/orders/:username", app.orderHandler.GetUserOrders)
-	fiberApp.Post("/orders", app.orderHandler.CreateOrder)
-	fiberApp.Put("/orders/:id", app.orderHandler.UpdateOrder)
-	fiberApp.Delete("/orders/:id", app.orderHandler.DeleteOrder)
-	fiberApp.Get("/orders/:id/invoice", app.orderHandler.GetInvoice)
-	fiberApp.Get("/orders/:id/print-invoice", app.orderHandler.PrintInvoice)
+	api.Get("/orders", middleware.IsAdminMiddleware(), app.orderHandler.GetAllOrders)
+	api.Get("/orders/:username", app.orderHandler.GetUserOrders)
+	api.Post("/orders", middleware.IsUserMiddleware(), app.orderHandler.CreateOrder)
+	api.Put("/orders/:id", app.orderHandler.UpdateOrder)
+	api.Delete("/orders/:id", middleware.IsAdminMiddleware(), app.orderHandler.DeleteOrder)
+	api.Get("/orders/:id/invoice", app.orderHandler.GetInvoice)
+	api.Get("/orders/:id/print-invoice", app.orderHandler.PrintInvoice)
 
 }

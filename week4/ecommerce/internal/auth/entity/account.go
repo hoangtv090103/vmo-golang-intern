@@ -1,6 +1,8 @@
 package entity
 
-import "time"
+import (
+	"time"
+)
 
 type Account struct {
 	ID        int        `json:"id,omitempty"`
@@ -11,6 +13,7 @@ type Account struct {
 	Password  string     `json:"password,omitempty"`
 	CreatedAt *time.Time `json:"created_at,omitempty"`
 	UpdatedAt *time.Time `json:"updated_at,omitempty"`
+	Role      string     `json:"role,omitempty"`
 }
 
 type AccountBuilder struct {
@@ -47,5 +50,10 @@ func (a *Account) SetCreatedAt() *Account {
 func (a *Account) SetUpdatedAt() *Account {
 	now := time.Now()
 	a.UpdatedAt = &now
+	return a
+}
+
+func (a *Account) SetRole(role string) *Account {
+	a.Role = role
 	return a
 }

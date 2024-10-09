@@ -12,11 +12,11 @@ import (
 )
 
 type AccountPGRepository struct {
-	db *sql.DB
+	DB *sql.DB
 }
 
 func NewAccountPGRepository(db *sql.DB) *AccountPGRepository {
-	return &AccountPGRepository{db: db}
+	return &AccountPGRepository{DB: db}
 }
 
 func (r *AccountPGRepository) Login(ctx context.Context, account *entity.Account) (*entity.Account, error) {
@@ -29,7 +29,7 @@ func (r *AccountPGRepository) Login(ctx context.Context, account *entity.Account
 	query = sqlx.Rebind(sqlx.DOLLAR, query)
 
 	foundAccount := &entity.Account{}
-	err := r.db.QueryRowContext(ctx, query, account.Username, account.Email).Scan(foundAccount)
+	err := r.DB.QueryRowContext(ctx, query, account.Username, account.Email).Scan(foundAccount)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, errors.New("account not found") // Account not found
@@ -41,6 +41,12 @@ func (r *AccountPGRepository) Login(ctx context.Context, account *entity.Account
 }
 
 func (r *AccountPGRepository) Register(ctx context.Context, account *entity.Account) error {
+	tx, err := r.DB.Begin()
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
 	// Create User
 	userQuery := `
 			INSERT INTO users (name, username, email)
@@ -49,7 +55,7 @@ func (r *AccountPGRepository) Register(ctx context.Context, account *entity.Acco
 		`
 	userQuery = sqlx.Rebind(sqlx.DOLLAR, userQuery)
 
-	err := r.db.QueryRowContext(
+	err = tx.QueryRowContext(
 		ctx,
 		userQuery,
 		account.Name,
@@ -65,7 +71,7 @@ func (r *AccountPGRepository) Register(ctx context.Context, account *entity.Acco
 	// Rebind the query to use $1, $2, etc.
 	query = sqlx.Rebind(sqlx.DOLLAR, query)
 
-	err = r.db.QueryRowContext(
+	err = tx.QueryRowContext(
 		ctx,
 		query,
 		account.UserID,
@@ -90,13 +96,33 @@ func (r *AccountPGRepository) Register(ctx context.Context, account *entity.Acco
 		return err
 	}
 
+	// Add user role
+	roleQuery := `
+			INSERT INTO user_roles (user_id, SELECT id FROM roles WHERE role_name = ?)
+			VALUES (?, ?)
+		`
+	roleQuery = sqlx.Rebind(sqlx.DOLLAR, roleQuery)
+
+	_, err = tx.ExecContext(
+		ctx,
+		roleQuery,
+		"user",
+		account.UserID,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit()
+
 	return nil
 }
 
 func (r *AccountPGRepository) GetByUsername(ctx context.Context, username string) (*entity.Account, error) {
-	query := "SELECT id, user_id, username, email, password, created_at, updated_at FROM accounts WHERE username = ?"
+	query := "SELECT a.id, a.user_id, a.username, a.email, a.password, a.created_at, a.updated_at, COALESCE(r.role_name, '') FROM accounts a LEFT JOIN user_roles ur ON ur.auth_id = a.id LEFT JOIN roles r ON ur.role_id = r.id WHERE a.username = ?"
 	query = sqlx.Rebind(sqlx.DOLLAR, query)
-	row := r.db.QueryRowContext(ctx, query, username)
+	row := r.DB.QueryRowContext(ctx, query, username)
 
 	account := &entity.Account{}
 	err := row.Scan(
@@ -107,6 +133,7 @@ func (r *AccountPGRepository) GetByUsername(ctx context.Context, username string
 		&account.Password,
 		&account.CreatedAt,
 		&account.UpdatedAt,
+		&account.Role,
 	)
 
 	if err != nil {
