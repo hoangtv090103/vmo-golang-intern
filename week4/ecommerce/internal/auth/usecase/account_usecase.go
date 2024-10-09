@@ -2,8 +2,8 @@ package usecase
 
 import (
 	"context"
-	"ecommerce/internal/account/entity"
-	"ecommerce/internal/account/repository"
+	"ecommerce/internal/auth/entity"
+	"ecommerce/internal/auth/repository"
 	"errors"
 
 	"golang.org/x/crypto/bcrypt"
@@ -19,10 +19,10 @@ type IAccountUsecase interface {
 }
 
 type AccountUsecase struct {
-	repo repository.AccountRepository
+	repo repository.IAccountRepository
 }
 
-func NewAccountUsecase(repo repository.AccountRepository) IAccountUsecase {
+func NewAccountUsecase(repo repository.IAccountRepository) IAccountUsecase {
 	return &AccountUsecase{
 		repo: repo,
 	}

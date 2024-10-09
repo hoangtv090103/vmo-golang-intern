@@ -9,11 +9,9 @@ import (
 )
 
 func routes(fa *fiber.App) *fiber.App {
-    fa.Use(recover.New())
-
-    fa.Use(timeout.NewWithContext(func(c *fiber.Ctx) error {
-        return c.SendString("Request time out")
-    }, 60*time.Second))
-
-    return fa
+	fa.Use(recover.New())
+	fa.Use(timeout.NewWithContext(func(c *fiber.Ctx) error {
+		return c.SendString("Request time out")
+	}, 60*time.Second))
+	return fa
 }

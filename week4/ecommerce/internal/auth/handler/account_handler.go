@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"ecommerce/internal/account/entity"
-	"ecommerce/internal/account/usecase"
+	"ecommerce/internal/auth/entity"
+	"ecommerce/internal/auth/usecase"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -18,16 +18,16 @@ func NewAccountHandler(au usecase.IAccountUsecase) *AccountHandler {
 }
 
 func (h *AccountHandler) Register(c *fiber.Ctx) error {
-    var account entity.Account
+	var account entity.Account
 	if err := c.BodyParser(&account); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
-    
+
 	err := h.au.Register(c.Context(), &account)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
-    
+
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": "Account created successfully"})
 }
 

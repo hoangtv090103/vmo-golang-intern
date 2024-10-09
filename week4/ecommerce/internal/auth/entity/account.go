@@ -3,14 +3,14 @@ package entity
 import "time"
 
 type Account struct {
-	ID        int        `json:"id"`
-	UserID    int        `json:"user_id"`
-	Name      string     `json:"name"`
-	Username  string     `json:"username"`
-	Email     string     `json:"email"`
-	Password  string     `json:"password"`
-	CreatedAt *time.Time `json:"created_at"`
-	UpdatedAt *time.Time `json:"updated_at"`
+	ID        int        `json:"id,omitempty"`
+	UserID    int        `json:"user_id,omitempty"`
+	Name      string     `json:"name,omitempty"`
+	Username  string     `json:"username,omitempty"`
+	Email     string     `json:"email,omitempty"`
+	Password  string     `json:"password,omitempty"`
+	CreatedAt *time.Time `json:"created_at,omitempty"`
+	UpdatedAt *time.Time `json:"updated_at,omitempty"`
 }
 
 type AccountBuilder struct {

@@ -3,7 +3,7 @@ package infra
 import (
 	"context"
 	"database/sql"
-	"ecommerce/internal/account/entity"
+	"ecommerce/internal/auth/entity"
 	"errors"
 	"strings"
 
